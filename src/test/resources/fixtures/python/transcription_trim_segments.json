@@ -1,0 +1,8 @@
+{
+  "text": "hi",
+  "language": "en",
+  "segments": [
+    { "start_time": 0, "end_time": 1, "text": "   " },
+    { "start_time": 1, "end_time": 2, "text": "real" }
+  ]
+}

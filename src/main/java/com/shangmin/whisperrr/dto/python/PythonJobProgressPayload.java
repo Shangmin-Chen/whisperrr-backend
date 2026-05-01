@@ -1,19 +1,34 @@
-package com.shangmin.whisperrr.dto;
+package com.shangmin.whisperrr.dto.python;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.time.LocalDateTime;
 
-/** Response DTO for job progress. */
-public class JobProgressResponse {
-  private String jobId;
-  private String status;
-  private Double progress;
-  private String message;
-  private TranscriptionResultResponse result;
-  private String error;
-  private LocalDateTime createdAt;
-  private LocalDateTime updatedAt;
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class PythonJobProgressPayload {
 
-  public JobProgressResponse() {}
+  @JsonProperty("job_id")
+  private String jobId;
+
+  private String status;
+
+  @JsonDeserialize(using = LenientDoubleDeserializer.class)
+  private Double progress;
+
+  private String message;
+
+  private PythonTranscriptionPayload result;
+
+  private Object error;
+
+  @JsonProperty("created_at")
+  @JsonDeserialize(using = PythonFlexibleLocalDateTimeDeserializer.class)
+  private LocalDateTime createdAt;
+
+  @JsonProperty("updated_at")
+  @JsonDeserialize(using = PythonFlexibleLocalDateTimeDeserializer.class)
+  private LocalDateTime updatedAt;
 
   public String getJobId() {
     return jobId;
@@ -47,19 +62,19 @@ public class JobProgressResponse {
     this.message = message;
   }
 
-  public TranscriptionResultResponse getResult() {
+  public PythonTranscriptionPayload getResult() {
     return result;
   }
 
-  public void setResult(TranscriptionResultResponse result) {
+  public void setResult(PythonTranscriptionPayload result) {
     this.result = result;
   }
 
-  public String getError() {
+  public Object getError() {
     return error;
   }
 
-  public void setError(String error) {
+  public void setError(Object error) {
     this.error = error;
   }
 

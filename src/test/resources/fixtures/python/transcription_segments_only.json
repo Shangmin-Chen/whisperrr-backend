@@ -1,0 +1,7 @@
+{
+  "language": "fr",
+  "segments": [
+    { "start_time": 0, "end_time": 1.0, "text": "Bonjour" },
+    { "start_time": 1.0, "end_time": 2.0, "text": "le monde" }
+  ]
+}

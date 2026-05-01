@@ -1,0 +1,8 @@
+{
+  "text": "Hello world",
+  "language": "en",
+  "confidence_score": 0.95,
+  "duration": 5.5,
+  "model_used": "base",
+  "processing_time": 2.3
+}

@@ -1,18 +1,17 @@
-package com.shangmin.whisperrr.dto;
+package com.shangmin.whisperrr.dto.python;
 
-/** Response DTO for job submission. */
-public class JobSubmissionResponse {
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class PythonJobSubmitPayload {
+
+  @JsonProperty("job_id")
   private String jobId;
+
   private String status;
+
   private String message;
-
-  public JobSubmissionResponse() {}
-
-  public JobSubmissionResponse(String jobId, String status, String message) {
-    this.jobId = jobId;
-    this.status = status;
-    this.message = message;
-  }
 
   public String getJobId() {
     return jobId;

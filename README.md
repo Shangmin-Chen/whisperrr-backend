@@ -1,11 +1,8 @@
 # Whisperrr API (Spring Boot)
 
-Spring Boot service for the Whisperrr transcription platform: validates uploads and proxies transcription to the Python microservice.
+Spring Boot service for Whisperrr: validates uploads and proxies transcription to the FastAPI worker.
 
-## Related repositories
-
-- [whisperrr-frontend](https://github.com/) — React UI (replace with your remote)
-- [whisperrr-py-microservice](https://github.com/) — FastAPI + Faster Whisper (replace with your remote)
+Sibling packages in this repo: `whisperrr-frontend/`, `whisperrr-py-microservice/`.
 
 ## Prerequisites
 
@@ -20,8 +17,7 @@ Default Python service URL is `http://localhost:5001` (see `src/main/resources/a
 ./setup-env.sh
 ```
 
-This writes `.env` (gitignored) for Spring Boot dotenv support: `WHISPERRR_SERVICE_URL`, `CORS_ALLOWED_ORIGINS`.
-
+This writes `.env` (gitignored) for `spring-dotenv`: `WHISPERRR_SERVICE_URL`, `CORS_ALLOWED_ORIGINS` (several loopback variants for typical dev). For **tunnel / Worker** fronts, align `CORS_ALLOWED_ORIGINS` with the real browser `Origin`; see [`docs/NEXTSTEPS.md`](../docs/NEXTSTEPS.md).
 ## Run locally
 
 ```bash
@@ -36,7 +32,10 @@ This writes `.env` (gitignored) for Spring Boot dotenv support: `WHISPERRR_SERVI
 ```bash
 ./mvnw test
 ./mvnw spotless:apply
+./mvnw verify
 ```
+
+`spotless:apply` formats Java sources (Google Java Format). `verify` runs tests and **`spotless:check`** so CI can fail on unformatted code.
 
 ## License
 
