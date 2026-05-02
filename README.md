@@ -6,7 +6,7 @@ Sibling packages in this repo: `whisperrr-frontend/`, `whisperrr-py-microservice
 
 ## Prerequisites
 
-- JDK 21
+- JDK 25
 - Maven (or use `./mvnw`)
 
 ## Configuration
