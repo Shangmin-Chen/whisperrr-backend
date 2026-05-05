@@ -73,6 +73,20 @@ public class GlobalExceptionHandler {
     return ResponseEntity.badRequest().body(error);
   }
 
+  @ExceptionHandler(JobNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleJobNotFoundException(
+      JobNotFoundException ex, HttpServletRequest request) {
+    String correlationId = getCorrelationId(request);
+    logger.warn("Job not found [{}]: {}", correlationId, ex.getMessage());
+    ErrorResponse error =
+        new ErrorResponse(
+            "JOB_NOT_FOUND",
+            sanitizeErrorMessage(ex.getMessage()),
+            LocalDateTime.now(),
+            correlationId);
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+  }
+
   @ExceptionHandler(TranscriptionProcessingException.class)
   public ResponseEntity<ErrorResponse> handleTranscriptionProcessingException(
       TranscriptionProcessingException ex, HttpServletRequest request) {

@@ -8,6 +8,8 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -42,12 +44,14 @@ public class AudioController {
    */
   @PostMapping(value = "/transcribe", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<TranscriptionResultResponse> transcribeAudio(
+      @AuthenticationPrincipal Jwt jwt,
       @RequestParam("audioFile") @Valid MultipartFile audioFile,
       @RequestParam(value = "modelSize", required = false) String modelSize,
       @RequestParam(value = "language", required = false) String language,
       @RequestParam(value = "task", required = false) String task) {
+    String userId = jwt.getSubject();
     TranscriptionResultResponse response =
-        audioService.transcribeAudio(audioFile, modelSize, language, task);
+        audioService.transcribeAudio(userId, audioFile, modelSize, language, task);
     return ResponseEntity.ok(response);
   }
 
@@ -60,12 +64,14 @@ public class AudioController {
    */
   @PostMapping(value = "/jobs/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<JobSubmissionResponse> submitTranscriptionJob(
+      @AuthenticationPrincipal Jwt jwt,
       @RequestParam("audioFile") @Valid MultipartFile audioFile,
       @RequestParam(value = "modelSize", required = false) String modelSize,
       @RequestParam(value = "language", required = false) String language,
       @RequestParam(value = "task", required = false) String task) {
+    String userId = jwt.getSubject();
     JobSubmissionResponse response =
-        audioService.submitTranscriptionJob(audioFile, modelSize, language, task);
+        audioService.submitTranscriptionJob(userId, audioFile, modelSize, language, task);
     return ResponseEntity.ok(response);
   }
 
@@ -76,8 +82,10 @@ public class AudioController {
    * @return job progress response
    */
   @GetMapping("/jobs/{jobId}/progress")
-  public ResponseEntity<JobProgressResponse> getJobProgress(@PathVariable String jobId) {
-    JobProgressResponse response = audioService.getJobProgress(jobId);
+  public ResponseEntity<JobProgressResponse> getJobProgress(
+      @AuthenticationPrincipal Jwt jwt, @PathVariable String jobId) {
+    String userId = jwt.getSubject();
+    JobProgressResponse response = audioService.getJobProgress(userId, jobId);
     return ResponseEntity.ok(response);
   }
 
