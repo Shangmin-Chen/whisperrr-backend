@@ -1,7 +1,7 @@
 #!/bin/bash
 # Writes backend .env for Spring (spring-dotenv): CORS for the SPA + Python transcription URL.
 # Supabase JWT (SUPABASE_JWT_JWK_SET_URI, SUPABASE_JWT_ISSUER_URI) and Postgres
-# (DATABASE_PROJECT_REF, DATABASE_PASSWORD) are not generated here — add those to .env manually; see README.md.
+# (DATABASE_PROJECT_REF, DATABASE_PASSWORD, DATABASE_POOLER_REGION) are not generated here — add those to .env manually; see README.md.
 
 set -euo pipefail
 
@@ -30,5 +30,5 @@ EOF
 
 echo "Wrote .env with CORS_ALLOWED_ORIGINS and WHISPERRR_SERVICE_URL."
 echo "If you use JWT auth, ensure .env also defines SUPABASE_JWT_JWK_SET_URI and SUPABASE_JWT_ISSUER_URI (see README)."
-echo "For Postgres / Flyway, add DATABASE_PROJECT_REF and DATABASE_PASSWORD; if JDBC hits TLS EOF while psql works, add DATABASE_POOLER_REGION (see README)."
+echo "For Postgres / Flyway, add DATABASE_PROJECT_REF, DATABASE_PASSWORD, and DATABASE_POOLER_REGION (see README)."
 echo "Restart Spring after changes."

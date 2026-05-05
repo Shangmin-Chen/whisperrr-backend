@@ -181,7 +181,7 @@ public class AudioServiceImpl implements AudioService {
   }
 
   private static <T> T requireOkBody(ResponseEntity<T> response) {
-    if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+    if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
       return response.getBody();
     }
     throw new TranscriptionProcessingException(

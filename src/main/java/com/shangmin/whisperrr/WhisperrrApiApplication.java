@@ -9,12 +9,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * async jobs with progress polling).
  *
  * <p><strong>Persistence:</strong> A JDBC {@link javax.sql.DataSource} and Flyway are registered
- * from {@code DATABASE_PROJECT_REF} and {@code DATABASE_PASSWORD} in {@link
- * com.shangmin.whisperrr.config.SupabasePostgresDataSourceConfig} (direct host or optional {@code
- * DATABASE_POOLER_REGION}; see README). Those env vars must resolve at runtime (e.g. from {@code
- * .env}) or the process will not start. Flyway applies scripts under {@code classpath:db/migration}
- * during startup before the application serves traffic. Tests activate the {@code test} profile and
- * skip that configuration.
+ * from {@code DATABASE_PROJECT_REF}, {@code DATABASE_PASSWORD}, and {@code DATABASE_POOLER_REGION}
+ * in {@link com.shangmin.whisperrr.config.SupabasePostgresDataSourceConfig} (Supabase session
+ * pooler; see README). Those env vars must resolve at runtime (e.g. from {@code .env}) or the
+ * process will not start. Flyway applies scripts under {@code classpath:db/migration} during
+ * startup before the application serves traffic. Tests activate the {@code test} profile and skip
+ * that configuration.
  *
  * <p>Shared {@code application.properties} holds CORS, multipart limits, Python service URLs, and
  * logging; JWT and datasource settings live in {@code application.yml}.
