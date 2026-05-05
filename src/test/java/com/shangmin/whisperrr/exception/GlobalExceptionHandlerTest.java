@@ -35,6 +35,19 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
+  void testHandleJobNotFoundException_ReturnsNotFound() {
+    JobNotFoundException ex = new JobNotFoundException("Job not found");
+    HttpServletRequest request = mock(HttpServletRequest.class);
+
+    ResponseEntity<ErrorResponse> response =
+        exceptionHandler.handleJobNotFoundException(ex, request);
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    assertNotNull(response.getBody());
+    assertEquals("JOB_NOT_FOUND", response.getBody().getError());
+  }
+
+  @Test
   void testHandleTranscriptionProcessingException_ReturnsInternalServerError() {
     TranscriptionProcessingException ex = new TranscriptionProcessingException("Processing failed");
     HttpServletRequest request = mock(HttpServletRequest.class);

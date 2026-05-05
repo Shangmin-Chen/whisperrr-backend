@@ -1,8 +1,13 @@
 package com.shangmin.whisperrr.config;
 
 import java.util.Arrays;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -58,9 +63,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  *
  * <h3>Implementation details:</h3>
  *
- * <p>CORS for {@code /api/**} is applied only via {@link WebMvcConfigurer}. If Spring Security is
- * adopted later, configure CORS on the security filter chain and replace or reconcile this mapping
- * as needed.
+ * <p>CORS for {@code /api/**} is registered both on {@link WebMvcConfigurer} and via {@link
+ * org.springframework.web.cors.CorsConfigurationSource} for the Spring Security filter chain.
  *
  * <h3>Preflight Request Handling:</h3>
  *
@@ -85,6 +89,27 @@ public class CorsConfig implements WebMvcConfigurer {
 
   @Value("${cors.allow-credentials}")
   private boolean allowCredentials;
+
+  /**
+   * CORS for the Spring Security filter chain (e.g. preflight) — matches {@link #addCorsMappings}.
+   */
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedMethods(Arrays.asList(allowedMethods.split(",")));
+    configuration.setAllowedHeaders(Arrays.asList(allowedHeaders.split(",")));
+    configuration.setAllowCredentials(allowCredentials);
+    configuration.setMaxAge(3600L);
+    if ("*".equals(allowedOrigins.trim())) {
+      configuration.setAllowedOriginPatterns(List.of("*"));
+    } else {
+      configuration.setAllowedOriginPatterns(
+          Arrays.stream(allowedOrigins.split(",")).map(String::trim).toList());
+    }
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/api/**", configuration);
+    return source;
+  }
 
   /**
    * Configure CORS mappings for all API endpoints under {@code /api/**}.

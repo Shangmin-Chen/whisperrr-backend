@@ -8,6 +8,7 @@ import com.shangmin.whisperrr.dto.TranscriptionResultResponse;
 import com.shangmin.whisperrr.exception.FileValidationException;
 import com.shangmin.whisperrr.exception.TranscriptionProcessingException;
 import com.shangmin.whisperrr.service.AudioService;
+import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -34,6 +36,15 @@ class AudioControllerTest {
   @Mock(lenient = true)
   private MultipartFile mockFile;
 
+  private static Jwt testJwt() {
+    return new Jwt(
+        "unit-test-token",
+        java.time.Instant.now(),
+        java.time.Instant.now().plusSeconds(3600),
+        Collections.singletonMap("alg", "ES256"),
+        Collections.singletonMap("sub", "test-uuid"));
+  }
+
   // ========== Direct Transcription Tests ==========
 
   @Test
@@ -41,46 +52,48 @@ class AudioControllerTest {
     TranscriptionResultResponse response = new TranscriptionResultResponse();
     response.setTranscriptionText("Test transcription");
 
-    when(audioService.transcribeAudio(any(), any(), any(), any())).thenReturn(response);
+    when(audioService.transcribeAudio(anyString(), any(), any(), any(), any()))
+        .thenReturn(response);
     when(mockFile.getOriginalFilename()).thenReturn("test.mp3");
 
     ResponseEntity<TranscriptionResultResponse> result =
-        audioController.transcribeAudio(mockFile, null, null, null);
+        audioController.transcribeAudio(testJwt(), mockFile, null, null, null);
 
     assertEquals(HttpStatus.OK, result.getStatusCode());
     assertNotNull(result.getBody());
-    verify(audioService).transcribeAudio(mockFile, null, null, null);
+    verify(audioService).transcribeAudio("test-uuid", mockFile, null, null, null);
   }
 
   @Test
   void testTranscribeAudio_WhenFileValidationFails_ThrowsException() {
-    when(audioService.transcribeAudio(any(), any(), any(), any()))
+    when(audioService.transcribeAudio(anyString(), any(), any(), any(), any()))
         .thenThrow(new FileValidationException("Invalid file"));
 
     assertThrows(
         FileValidationException.class,
-        () -> audioController.transcribeAudio(mockFile, null, null, null));
+        () -> audioController.transcribeAudio(testJwt(), mockFile, null, null, null));
   }
 
   @Test
   void testTranscribeAudio_WhenServiceFails_ThrowsException() {
-    when(audioService.transcribeAudio(any(), any(), any(), any()))
+    when(audioService.transcribeAudio(anyString(), any(), any(), any(), any()))
         .thenThrow(new TranscriptionProcessingException("Service error"));
 
     assertThrows(
         TranscriptionProcessingException.class,
-        () -> audioController.transcribeAudio(mockFile, null, null, null));
+        () -> audioController.transcribeAudio(testJwt(), mockFile, null, null, null));
   }
 
   @Test
   void testTranscribeAudio_WithModelSize_ForwardsToService() {
     TranscriptionResultResponse response = new TranscriptionResultResponse();
-    when(audioService.transcribeAudio(any(), eq("large"), any(), any())).thenReturn(response);
+    when(audioService.transcribeAudio(anyString(), any(), eq("large"), any(), any()))
+        .thenReturn(response);
     when(mockFile.getOriginalFilename()).thenReturn("test.mp3");
 
-    audioController.transcribeAudio(mockFile, "large", null, null);
+    audioController.transcribeAudio(testJwt(), mockFile, "large", null, null);
 
-    verify(audioService).transcribeAudio(mockFile, "large", null, null);
+    verify(audioService).transcribeAudio("test-uuid", mockFile, "large", null, null);
   }
 
   // ========== Health Check Tests ==========

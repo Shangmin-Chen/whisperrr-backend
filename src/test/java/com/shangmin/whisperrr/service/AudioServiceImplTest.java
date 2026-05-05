@@ -5,25 +5,31 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.shangmin.whisperrr.client.PythonTranscriptionClient;
 import com.shangmin.whisperrr.dto.TranscriptionResultResponse;
+import com.shangmin.whisperrr.dto.python.PythonJobProgressPayload;
 import com.shangmin.whisperrr.dto.python.PythonJobSubmitPayload;
 import com.shangmin.whisperrr.dto.python.PythonTranscriptionPayload;
 import com.shangmin.whisperrr.exception.FileValidationException;
+import com.shangmin.whisperrr.exception.JobNotFoundException;
 import com.shangmin.whisperrr.exception.TranscriptionProcessingException;
+import com.shangmin.whisperrr.repository.TranscriptionJobOwnershipRepository;
 import com.shangmin.whisperrr.service.impl.AudioServiceImpl;
 import com.shangmin.whisperrr.service.support.PythonTranscriptionResponseMapper;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -37,8 +43,14 @@ import org.springframework.web.multipart.MultipartFile;
 @ExtendWith(MockitoExtension.class)
 class AudioServiceImplTest {
 
+  private static final UUID USER_UUID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+  private static final UUID JOB_UUID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+
   @Mock(lenient = true)
   private PythonTranscriptionClient pythonClient;
+
+  @Mock(lenient = true)
+  private TranscriptionJobOwnershipRepository jobOwnershipRepository;
 
   private PythonTranscriptionResponseMapper transcriptionMapper;
   private AudioServiceImpl audioService;
@@ -48,13 +60,14 @@ class AudioServiceImplTest {
   @BeforeEach
   void setUp() {
     transcriptionMapper = new PythonTranscriptionResponseMapper();
-    audioService = new AudioServiceImpl(pythonClient, transcriptionMapper);
+    audioService = new AudioServiceImpl(pythonClient, transcriptionMapper, jobOwnershipRepository);
   }
 
   @Test
   void testTranscribeAudio_WithNullFile_ThrowsException() {
     assertThrows(
-        FileValidationException.class, () -> audioService.transcribeAudio(null, null, null, null));
+        FileValidationException.class,
+        () -> audioService.transcribeAudio(null, null, null, null, null));
   }
 
   @Test
@@ -63,7 +76,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         FileValidationException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -73,7 +86,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         FileValidationException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -84,7 +97,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         FileValidationException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -96,7 +109,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         FileValidationException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -108,7 +121,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         FileValidationException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -120,7 +133,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         FileValidationException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -133,7 +146,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         TranscriptionProcessingException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -146,7 +159,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         TranscriptionProcessingException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -162,7 +175,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         TranscriptionProcessingException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -178,7 +191,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         TranscriptionProcessingException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -194,7 +207,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         TranscriptionProcessingException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -210,7 +223,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         TranscriptionProcessingException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -225,7 +238,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         TranscriptionProcessingException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -244,7 +257,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         TranscriptionProcessingException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -262,7 +275,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         TranscriptionProcessingException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -281,7 +294,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         TranscriptionProcessingException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -299,7 +312,8 @@ class AudioServiceImplTest {
             any(), nullable(String.class), nullable(String.class), nullable(String.class)))
         .thenReturn(response);
 
-    TranscriptionResultResponse result = audioService.transcribeAudio(mockFile, null, null, null);
+    TranscriptionResultResponse result =
+        audioService.transcribeAudio("user-1", mockFile, null, null, null);
     assertNotNull(result);
     assertNull(result.getConfidence());
   }
@@ -322,7 +336,7 @@ class AudioServiceImplTest {
     assertDoesNotThrow(
         () -> {
           TranscriptionResultResponse result =
-              audioService.transcribeAudio(mockFile, null, null, null);
+              audioService.transcribeAudio("user-1", mockFile, null, null, null);
           assertNotNull(result);
         });
   }
@@ -337,7 +351,7 @@ class AudioServiceImplTest {
 
     assertThrows(
         TranscriptionProcessingException.class,
-        () -> audioService.transcribeAudio(mockFile, null, null, null));
+        () -> audioService.transcribeAudio("user-1", mockFile, null, null, null));
   }
 
   @Test
@@ -358,7 +372,8 @@ class AudioServiceImplTest {
             any(), nullable(String.class), nullable(String.class), nullable(String.class)))
         .thenReturn(response);
 
-    TranscriptionResultResponse result = audioService.transcribeAudio(mockFile, null, null, null);
+    TranscriptionResultResponse result =
+        audioService.transcribeAudio("user-1", mockFile, null, null, null);
 
     assertNotNull(result);
     assertEquals("Hello world", result.getTranscriptionText());
@@ -380,7 +395,7 @@ class AudioServiceImplTest {
 
     when(pythonClient.postTranscribe(any(), eq("large"), isNull(), isNull())).thenReturn(response);
 
-    audioService.transcribeAudio(mockFile, "large", null, null);
+    audioService.transcribeAudio("user-1", mockFile, "large", null, null);
 
     verify(pythonClient).postTranscribe(mockFile, "large", null, null);
   }
@@ -389,7 +404,7 @@ class AudioServiceImplTest {
   void testSubmitTranscriptionJob_DelegatesToClient() {
     setupValidFile();
     PythonJobSubmitPayload submitted = new PythonJobSubmitPayload();
-    submitted.setJobId("j1");
+    submitted.setJobId(JOB_UUID.toString());
     submitted.setStatus("queued");
     submitted.setMessage("ok");
     ResponseEntity<PythonJobSubmitPayload> response = ResponseEntity.ok(submitted);
@@ -398,12 +413,58 @@ class AudioServiceImplTest {
             any(), nullable(String.class), nullable(String.class), nullable(String.class)))
         .thenReturn(response);
 
-    var jobResponse = audioService.submitTranscriptionJob(mockFile, null, null, null);
-    assertEquals("j1", jobResponse.getJobId());
+    var jobResponse =
+        audioService.submitTranscriptionJob(USER_UUID.toString(), mockFile, null, null, null);
+    assertEquals(JOB_UUID.toString(), jobResponse.getJobId());
     assertEquals("queued", jobResponse.getStatus());
     verify(pythonClient)
         .postSubmitJob(
             any(), nullable(String.class), nullable(String.class), nullable(String.class));
+    verify(jobOwnershipRepository).recordJobSubmitted(JOB_UUID, USER_UUID);
+  }
+
+  @Test
+  void testSubmitTranscriptionJob_WhenOwnershipInsertFails_ThrowsException() {
+    setupValidFile();
+    PythonJobSubmitPayload submitted = new PythonJobSubmitPayload();
+    submitted.setJobId(JOB_UUID.toString());
+    submitted.setStatus("queued");
+    submitted.setMessage("ok");
+    ResponseEntity<PythonJobSubmitPayload> response = ResponseEntity.ok(submitted);
+
+    when(pythonClient.postSubmitJob(
+            any(), nullable(String.class), nullable(String.class), nullable(String.class)))
+        .thenReturn(response);
+    doThrow(new DataAccessException("insert failed") {})
+        .when(jobOwnershipRepository)
+        .recordJobSubmitted(JOB_UUID, USER_UUID);
+
+    assertThrows(
+        TranscriptionProcessingException.class,
+        () ->
+            audioService.submitTranscriptionJob(USER_UUID.toString(), mockFile, null, null, null));
+  }
+
+  @Test
+  void testGetJobProgress_WhenNotOwned_ThrowsJobNotFoundException() {
+    when(jobOwnershipRepository.isOwnedByUser(JOB_UUID, USER_UUID)).thenReturn(false);
+
+    assertThrows(
+        JobNotFoundException.class,
+        () -> audioService.getJobProgress(USER_UUID.toString(), JOB_UUID.toString()));
+  }
+
+  @Test
+  void testGetJobProgress_WhenOwned_DelegatesToPython() {
+    when(jobOwnershipRepository.isOwnedByUser(JOB_UUID, USER_UUID)).thenReturn(true);
+    PythonJobProgressPayload progress = new PythonJobProgressPayload();
+    progress.setStatus("completed");
+    ResponseEntity<PythonJobProgressPayload> entity = ResponseEntity.ok(progress);
+    when(pythonClient.getJobProgress(JOB_UUID.toString())).thenReturn(entity);
+
+    var result = audioService.getJobProgress(USER_UUID.toString(), JOB_UUID.toString());
+    assertNotNull(result);
+    verify(pythonClient).getJobProgress(JOB_UUID.toString());
   }
 
   private void setupValidFile() {

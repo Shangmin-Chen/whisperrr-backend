@@ -28,7 +28,7 @@ public interface AudioService {
    *     fails
    */
   TranscriptionResultResponse transcribeAudio(
-      MultipartFile audioFile, String modelSize, String language, String task);
+      String userId, MultipartFile audioFile, String modelSize, String language, String task);
 
   /**
    * Submit a transcription job for asynchronous processing.
@@ -41,7 +41,7 @@ public interface AudioService {
    *     fails
    */
   JobSubmissionResponse submitTranscriptionJob(
-      MultipartFile audioFile, String modelSize, String language, String task);
+      String userId, MultipartFile audioFile, String modelSize, String language, String task);
 
   /**
    * Get the progress of a transcription job.
@@ -51,7 +51,7 @@ public interface AudioService {
    * @throws com.shangmin.whisperrr.exception.TranscriptionProcessingException if job not found or
    *     error occurs
    */
-  JobProgressResponse getJobProgress(String jobId);
+  JobProgressResponse getJobProgress(String userId, String jobId);
 
   /**
    * Validate an audio file before processing.

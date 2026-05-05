@@ -4,63 +4,20 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Main application class for the Whisperrr Direct Audio Transcription API.
+ * Spring Boot entry point for the Whisperrr HTTP API: upload validation, Supabase JWT security for
+ * {@code /api/**}, and proxying to the Python transcription service (synchronous transcribe and
+ * async jobs with progress polling).
  *
- * <p>This is the entry point for the simplified Spring Boot application that provides instant audio
- * transcription services. The application serves as a lightweight proxy between the React frontend
- * and the Python transcription service, handling:
+ * <p><strong>Persistence:</strong> A JDBC {@link javax.sql.DataSource} and Flyway are registered
+ * from {@code DATABASE_PROJECT_REF} and {@code DATABASE_PASSWORD} in {@link
+ * com.shangmin.whisperrr.config.SupabasePostgresDataSourceConfig} (direct host or optional {@code
+ * DATABASE_POOLER_REGION}; see README). Those env vars must resolve at runtime (e.g. from {@code
+ * .env}) or the process will not start. Flyway applies scripts under {@code classpath:db/migration}
+ * during startup before the application serves traffic. Tests activate the {@code test} profile and
+ * skip that configuration.
  *
- * <ul>
- *   <li>Audio file upload and validation
- *   <li>Direct communication with Python FastAPI transcription service
- *   <li>CORS configuration for frontend communication
- *   <li>Comprehensive error handling and logging
- *   <li>Instant transcription results without persistence
- * </ul>
- *
- * <h3>Simplified Architecture:</h3>
- *
- * <p>The application follows a streamlined proxy pattern:
- *
- * <ul>
- *   <li><strong>Controller Layer:</strong> REST endpoints for client communication
- *   <li><strong>Service Layer:</strong> Validation and Python service integration
- *   <li><strong>DTO Layer:</strong> Data transfer objects for API communication
- *   <li><strong>Configuration Layer:</strong> CORS and service integration settings
- * </ul>
- *
- * <h3>Key Features:</h3>
- *
- * <ul>
- *   <li>RESTful API with instant transcription results
- *   <li>No database - stateless operation
- *   <li>File upload validation and processing
- *   <li>Direct Python service integration
- *   <li>Health monitoring and metrics
- *   <li>CORS configuration for cross-origin requests
- * </ul>
- *
- * <h3>Stateless Operation:</h3>
- *
- * <p>The application operates without any persistent storage:
- *
- * <ul>
- *   <li><strong>No Database:</strong> No setup or maintenance required
- *   <li><strong>Direct Processing:</strong> Files processed immediately
- *   <li><strong>Instant Results:</strong> No job queuing or polling
- *   <li><strong>Simplified Deployment:</strong> Fewer moving parts
- * </ul>
- *
- * <h3>Configuration:</h3>
- *
- * <p>The application is configured through application.properties and supports:
- *
- * <ul>
- *   <li>CORS configuration for frontend communication
- *   <li>Python service integration settings
- *   <li>File upload limits and validation rules
- *   <li>Logging and monitoring configuration
- * </ul>
+ * <p>Shared {@code application.properties} holds CORS, multipart limits, Python service URLs, and
+ * logging; JWT and datasource settings live in {@code application.yml}.
  *
  * @author shangmin
  * @version 2.0
@@ -73,29 +30,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class WhisperrrApiApplication {
 
   /**
-   * Main method to start the simplified Spring Boot application.
+   * Starts the Spring context, embedded web server (default port 7331), and Flyway when a JDBC
+   * datasource is configured.
    *
-   * <p>This method initializes the Spring application context, sets up all configured beans, starts
-   * the embedded Tomcat server, and begins listening for HTTP requests on the configured port
-   * (default: 7331).
-   *
-   * <p>The application will automatically:
-   *
-   * <ul>
-   *   <li>Configure CORS for frontend communication
-   *   <li>Set up REST endpoints for direct audio transcription
-   *   <li>Initialize HTTP client for Python service communication
-   *   <li>Enable health monitoring and metrics
-   *   <li>Configure file upload handling
-   * </ul>
-   *
-   * <p><strong>No Database Required:</strong> This simplified version operates without any database
-   * setup, providing instant transcription results.
-   *
-   * @param args command line arguments passed to the application Common arguments include:
-   *     --server.port=7331 (change server port) --spring.profiles.active=dev (activate dev profile)
-   *     --logging.level.com.shangmin.whisperrr=DEBUG (enable debug logging)
-   *     --whisperrr.service.url=http://localhost:5001 (Python service URL)
+   * @param args e.g. {@code --server.port=7331}, {@code --spring.profiles.active=prod}, {@code
+   *     --logging.level.com.shangmin.whisperrr=DEBUG}
    */
   public static void main(String[] args) {
     SpringApplication.run(WhisperrrApiApplication.class, args);

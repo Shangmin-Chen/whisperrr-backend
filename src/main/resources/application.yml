@@ -1,0 +1,17 @@
+# Supabase Auth (JWT resource server). Set both from your project:
+# https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json
+# https://<project-ref>.supabase.co/auth/v1
+#
+# Postgres: DATABASE_PROJECT_REF + DATABASE_PASSWORD (same password as psql). JDBC URL is built in
+# SupabasePostgresDataSourceConfig. Optional DATABASE_POOLER_REGION = AWS region from Supabase Connect →
+# Session pooler when JDBC hits TLS EOF on direct db.<ref>.supabase.co (IPv6-only from many networks).
+#
+spring:
+  flyway:
+    locations: classpath:db/migration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${SUPABASE_JWT_JWK_SET_URI}
+          issuer-uri: ${SUPABASE_JWT_ISSUER_URI}

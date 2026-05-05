@@ -9,12 +9,16 @@ import com.shangmin.whisperrr.dto.python.PythonJobSubmitPayload;
 import com.shangmin.whisperrr.dto.python.PythonTranscriptionPayload;
 import com.shangmin.whisperrr.enums.AudioFormat;
 import com.shangmin.whisperrr.exception.FileValidationException;
+import com.shangmin.whisperrr.exception.JobNotFoundException;
 import com.shangmin.whisperrr.exception.TranscriptionProcessingException;
+import com.shangmin.whisperrr.repository.TranscriptionJobOwnershipRepository;
 import com.shangmin.whisperrr.service.AudioService;
 import com.shangmin.whisperrr.service.support.PythonTranscriptionResponseMapper;
 import com.shangmin.whisperrr.util.SecurityUtils;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -36,17 +40,21 @@ public class AudioServiceImpl implements AudioService {
 
   private final PythonTranscriptionClient pythonClient;
   private final PythonTranscriptionResponseMapper transcriptionMapper;
+  private final TranscriptionJobOwnershipRepository jobOwnershipRepository;
 
   public AudioServiceImpl(
       PythonTranscriptionClient pythonClient,
-      PythonTranscriptionResponseMapper transcriptionMapper) {
+      PythonTranscriptionResponseMapper transcriptionMapper,
+      TranscriptionJobOwnershipRepository jobOwnershipRepository) {
     this.pythonClient = pythonClient;
     this.transcriptionMapper = transcriptionMapper;
+    this.jobOwnershipRepository = jobOwnershipRepository;
   }
 
   @Override
   public TranscriptionResultResponse transcribeAudio(
-      MultipartFile audioFile, String modelSize, String language, String task) {
+      String userId, MultipartFile audioFile, String modelSize, String language, String task) {
+    logger.debug("transcribeAudio userId={}", userId);
     validateAudioFile(audioFile);
 
     try {
@@ -103,13 +111,29 @@ public class AudioServiceImpl implements AudioService {
 
   @Override
   public JobSubmissionResponse submitTranscriptionJob(
-      MultipartFile audioFile, String modelSize, String language, String task) {
+      String userId, MultipartFile audioFile, String modelSize, String language, String task) {
+    logger.debug("submitTranscriptionJob userId={}", userId);
     validateAudioFile(audioFile);
 
     try {
       PythonJobSubmitPayload body =
           requireOkBody(pythonClient.postSubmitJob(audioFile, modelSize, language, task));
-      return transcriptionMapper.toJobSubmissionResponse(body);
+      JobSubmissionResponse mapped = transcriptionMapper.toJobSubmissionResponse(body);
+      UUID jobUuid = parseUuid(mapped.getJobId(), "job id");
+      UUID ownerUuid = parseUuid(userId, "user id");
+      try {
+        jobOwnershipRepository.recordJobSubmitted(jobUuid, ownerUuid);
+      } catch (DataAccessException e) {
+        logger.error(
+            "Failed to record job ownership jobId={} userId={}: {}",
+            mapped.getJobId(),
+            userId,
+            e.getMessage(),
+            e);
+        throw new TranscriptionProcessingException(
+            "Failed to record transcription job ownership", e);
+      }
+      return mapped;
 
     } catch (TranscriptionProcessingException e) {
       throw e;
@@ -119,7 +143,13 @@ public class AudioServiceImpl implements AudioService {
   }
 
   @Override
-  public JobProgressResponse getJobProgress(String jobId) {
+  public JobProgressResponse getJobProgress(String userId, String jobId) {
+    logger.debug("getJobProgress userId={} jobId={}", userId, jobId);
+    UUID jobUuid = parseUuid(jobId, "job id");
+    UUID ownerUuid = parseUuid(userId, "user id");
+    if (!jobOwnershipRepository.isOwnedByUser(jobUuid, ownerUuid)) {
+      throw new JobNotFoundException("Job not found");
+    }
     try {
       var response = pythonClient.getJobProgress(jobId);
       return transcriptionMapper.toJobProgressResponse(requireOkBody(response));
@@ -136,6 +166,17 @@ public class AudioServiceImpl implements AudioService {
       logger.error("Failed to get job progress: {}", e.getMessage(), e);
       throw new TranscriptionProcessingException(
           "Failed to get job progress: " + e.getMessage(), e);
+    }
+  }
+
+  private static UUID parseUuid(String raw, String label) {
+    if (raw == null || raw.isBlank()) {
+      throw new TranscriptionProcessingException("Invalid " + label);
+    }
+    try {
+      return UUID.fromString(raw.trim());
+    } catch (IllegalArgumentException e) {
+      throw new TranscriptionProcessingException("Invalid " + label, e);
     }
   }
 
